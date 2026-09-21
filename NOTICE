@@ -1,0 +1,25 @@
+Laya Snake for Windows
+
+This independent Windows adaptation includes software from:
+
+  mizorewww/laya-mlx
+  https://github.com/mizorewww/laya-mlx
+  Copyright 2026 laya-mlx contributors. Apache-2.0.
+
+upstream/game.py retains the original game and cycle safety planner.
+upstream/policy.py retains the original prompt construction and decision method;
+its constructor and imports were adapted for injectable Windows/API backends.
+Source was retrieved on 2026-09-21. Original notices are in upstream/NOTICE.
+
+The browser interface, local server, persistent process adapter, JEV adapter,
+comparison controller, Windows launcher, and configuration guide were added or
+adapted on 2026-09-21.
+
+Laya models are by Convai Innovations and contributors:
+  https://github.com/NandhaKishorM/laya
+
+ggmlc and its Laya executable are a separate project, downloaded by users:
+  https://github.com/monatis/ggmlc
+
+TypeSafe JEV is accessed through its API and is not bundled with this source.
+This project is not an official release of laya-mlx, ggmlc, or TypeSafe.

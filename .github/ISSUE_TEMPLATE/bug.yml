@@ -1,0 +1,22 @@
+name: Bug report
+description: Report a reproducible problem without sharing secrets.
+body:
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Python version, GPU/driver, backend build, and model filename. Do not include API keys or personal paths.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Include seed, board size, selected engines, shield state, and expected versus actual behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Redacted error output
+      description: Remove credentials, authorization headers, and private paths before posting.

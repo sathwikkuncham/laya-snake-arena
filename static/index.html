@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="app-token" content="__APP_TOKEN__">
+  <title>Laya Snake Arena</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/draw.js" defer></script>
+  <script src="/app.js" defer></script>
+  <script src="/compare.js" defer></script>
+</head>
+<body>
+<main>
+  <header>
+    <div class="brand"><span class="brand-mark" aria-hidden="true">↳</span><span>LAYA<span class="brand-sub"> / PLAYGROUND</span></span></div>
+    <nav class="mode-nav" aria-label="Play mode"><button id="mode-solo" aria-pressed="true">Solo</button><button id="mode-compare" aria-pressed="false">Compare</button></nav>
+    <div class="header-right"><span class="local"><i></i><span id="connection-label">LOCAL INFERENCE</span></span><button id="quit" class="text-button">Quit app</button></div>
+  </header>
+  <div id="solo-view">
+  <section class="intro">
+    <div><div class="eyebrow">01 — THE SNAKE EXPERIMENT</div><h1>A small model. <br>A moving target.</h1><p id="solo-intro-copy">Watch the selected engine choose its next move.</p></div>
+    <div class="model-card"><span class="model-icon" aria-hidden="true">▦</span><div><strong><span id="solo-engine-title">Laya</span> <span id="solo-engine-provider" class="pill">GGMLC</span></strong><span id="hardware">Preparing engine…</span><span class="model-detail">Original Snake policy · configurable backend</span></div></div>
+  </section>
+  <div id="error" role="alert" hidden></div>
+  <section class="arena-layout">
+    <div class="arena-card">
+      <div class="arena-top"><div class="arena-title"><i id="status-dot"></i><span id="status">LOADING MODEL</span></div><span id="mode-label">LAYA + CYCLE SAFETY</span></div>
+      <div class="stats"><div><span>SCORE</span><strong id="score">00</strong></div><div><span>LENGTH</span><strong id="length">06</strong></div><div><span>MOVES</span><strong id="moves">0</strong></div><div><span>SESSION BEST</span><strong id="best">00</strong></div></div>
+      <div class="board-wrap"><canvas id="board" width="960" height="640" role="img" aria-label="Snake game board"></canvas><div id="overlay" class="overlay"><span id="overlay-kicker">CONNECTING</span><strong id="overlay-title">Waking up Laya</strong><p id="overlay-copy">Loading your model and preparing the first decisions.</p></div></div>
+      <div class="board-footer"><span><i class="legend-snake"></i> <span id="solo-engine-legend">Laya</span> <i class="legend-food"></i> Food</span><span id="seed-label">SEED 7 · 24 × 16</span></div>
+      <div class="controls"><button class="primary" id="play" disabled>▶ Start game</button><button id="step" disabled>Step once</button><button id="reset">↻ New game</button><div class="speed"><label for="speed">PACE</label><select id="speed"><option value="2">2 moves/s</option><option value="4">4 moves/s</option><option value="8" selected>8 moves/s</option><option value="12">12 moves/s</option><option value="20">20 moves/s</option><option value="0">Maximum</option></select></div></div>
+      <div class="full-speed-strip" id="full-speed-strip"><div class="full-speed-copy"><button id="full-speed" aria-pressed="false" disabled>↗ Run at full speed</button><p id="full-speed-note">Remove the pace limit to measure your computer's actual speed.</p></div><div class="speed-reading"><span id="speed-reading-label">MEASURED GAME SPEED</span><strong id="full-speed-rate">— <small>moves/s</small></strong></div></div>
+      <div class="keyboard-hint"><span><kbd>Space</kbd> play / pause <kbd>R</kbd> new game</span><span>One fresh prediction per move</span></div>
+    </div>
+    <aside class="decision-card">
+      <div class="panel-heading"><span class="eyebrow">INSIDE THE DECISION</span><span class="tag">LIVE</span></div>
+      <h2>Where next?</h2><p class="panel-note">Engine probabilities for the last move.</p>
+      <div class="directions" aria-label="Direction probabilities">
+        <div class="direction" data-direction="UP"><div><span><b>↑</b> Up</span><strong>—</strong></div><div class="track"><i></i></div></div>
+        <div class="direction" data-direction="DOWN"><div><span><b>↓</b> Down</span><strong>—</strong></div><div class="track"><i></i></div></div>
+        <div class="direction" data-direction="LEFT"><div><span><b>←</b> Left</span><strong>—</strong></div><div class="track"><i></i></div></div>
+        <div class="direction" data-direction="RIGHT"><div><span><b>→</b> Right</span><strong>—</strong></div><div class="track"><i></i></div></div>
+      </div>
+      <div class="move-result"><div><span>ENGINE CHOSE</span><strong id="proposed">—</strong></div><span class="connector">→</span><div><span>EXECUTED</span><strong id="executed">—</strong></div><span id="override" hidden>SHIELD</span></div>
+      <div class="shield-control"><div><label for="shield">Cycle safety shield</label><span id="shield-caption">Protects against unsafe proposals.</span></div><input type="checkbox" id="shield" checked role="switch" aria-label="Cycle safety shield"></div>
+      <div class="safety-note">Changing the shield starts a fresh game. Planner features are supplied in both modes.</div>
+      <div class="metrics"><div><span>Inference</span><strong id="latency">— <small>ms</small></strong></div><div><span>Actual pace</span><strong id="rate">— <small>moves/s</small></strong></div><div><span>Shield interventions</span><strong id="interventions">0</strong></div><div><span>Safe directions</span><strong id="safe">—</strong></div></div>
+      <div class="estimates"><div><span>Safe route estimate</span><strong id="safe-prob">—</strong></div><div><span>Food reachability estimate</span><strong id="food-prob">—</strong></div><p>Model estimates from planner descriptions, not calibrated game-outcome probabilities.</p></div>
+    </aside>
+  </section>
+  </div>
+  <section id="compare-view" hidden>
+    <div class="intro compare-intro"><div><div class="eyebrow">02 — THE SAME START. DIFFERENT ENGINES.</div><h1 id="compare-heading">Decision engines, side by side.</h1><p>Same game. Same questions. Full speed for every move.</p></div><div class="comparison-badge"><i></i> UNCAPPED COMPARISON</div></div>
+    <div class="compare-toolbar"><div class="field"><label for="compare-models">ENGINES</label><select id="compare-models"><option value="both">Both · side by side</option><option value="laya">Laya · local GPU</option><option value="jev">JEV · TypeSafe API</option></select></div><div class="field"><label for="compare-seed">SHARED SEED</label><input id="compare-seed" type="number" min="0" max="999999" value="7"></div><div class="field"><label for="compare-limit">MOVES PER ENGINE</label><input id="compare-limit" type="number" min="1" max="1000" value="300"></div><label class="compare-shield"><input id="compare-shield" type="checkbox" checked> Cycle safety on all engines</label><div class="compare-actions"><button class="primary" id="compare-start">▶ Start comparison</button><button id="compare-pause" disabled>Ⅱ Pause</button><button id="compare-reset">↻ New comparison</button></div></div>
+    <div class="comparison-method"><span>24 × 16 board · 3 questions per move · No pacing delay</span><span id="compare-connection">JEV uses your Verdict key securely on the server.</span></div>
+    <div id="compare-error" role="alert" hidden></div>
+    <div class="compare-grid" id="compare-grid"></div>
+    <div class="comparison-summary"><div><span class="eyebrow">READING THE COMPARISON</span><p id="compare-summary">Start a run to measure both engines on your setup.</p></div><button id="compare-export" class="text-button" disabled>↓ Export comparison</button></div>
+    <p class="comparison-footnote">Selected engines start from the same board and seed, then follow their own decisions; paths and later prompts can diverge. Latency includes the complete request and response, including network travel for cloud providers. Pause finishes any request already in progress.</p>
+  </section>
+  <footer><p>Adapted from <a href="https://github.com/mizorewww/laya-mlx" target="_blank" rel="noreferrer">laya-mlx</a> · Laya inference via <a href="https://github.com/monatis/ggmlc" target="_blank" rel="noreferrer">ggmlc</a> · <span id="footer-runtime">Runs on your computer</span></p><button id="export" class="text-button" disabled>↓ Export run</button></footer>
+  <div id="toast" role="status" aria-live="polite" hidden></div>
+</main>
+</body>
+</html>

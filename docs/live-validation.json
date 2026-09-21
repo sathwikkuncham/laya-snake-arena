@@ -1,0 +1,29 @@
+{
+  "moves_per_engine": 8,
+  "seed": 7,
+  "actual_live_calls": true,
+  "results": {
+    "laya": {
+      "state": "finished",
+      "model": "laya_multilingual_f16.gguf",
+      "elapsed_s": 0.314,
+      "average_rate": 25.49,
+      "median_ms": 34.72,
+      "p95_ms": 47.56,
+      "interventions": 0,
+      "input_tokens": 1232,
+      "output_tokens": 0
+    },
+    "jev": {
+      "state": "finished",
+      "model": "jev-1.13.0",
+      "elapsed_s": 3.947,
+      "average_rate": 2.03,
+      "median_ms": 380.12,
+      "p95_ms": 968.01,
+      "interventions": 0,
+      "input_tokens": 3134,
+      "output_tokens": 624
+    }
+  }
+}

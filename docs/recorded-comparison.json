@@ -1,0 +1,29 @@
+{
+  "seed": 7,
+  "move_limit": 100,
+  "shield": true,
+  "hardware": "NVIDIA GeForce RTX 4070 SUPER",
+  "results": {
+    "laya": {
+      "model": "laya_multilingual_f16.gguf",
+      "elapsed_s": 0.906,
+      "average_rate": 110.42,
+      "median_ms": 5.57,
+      "p95_ms": 6.9,
+      "interventions": 0,
+      "input_tokens": 15270,
+      "output_tokens": 0
+    },
+    "jev": {
+      "model": "jev-1.13.0",
+      "elapsed_s": 38.723,
+      "average_rate": 2.58,
+      "median_ms": 371.16,
+      "p95_ms": 430.4,
+      "interventions": 0,
+      "input_tokens": 39109,
+      "output_tokens": 7800
+    }
+  },
+  "note": "Single captured demonstration; latency includes the network for JEV and does not establish a universal speed or quality ranking."
+}

@@ -1,0 +1,14 @@
+name: Feature or provider request
+description: Propose a new engine or improvement.
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: What would this enable?
+    validations:
+      required: true
+  - type: textarea
+    id: design
+    attributes:
+      label: Proposed interface and validation
+      description: For providers, link public API docs and explain how to return real choice/noul probabilities.

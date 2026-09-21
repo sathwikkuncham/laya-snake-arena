@@ -1,0 +1,10 @@
+{
+  "model": {
+    "file": "laya_multilingual_f16.gguf",
+    "sha256": "5fdabb71480e6469e986d71d15dabe1dc7160fcdf4bc6e10bd3acc4f51ff4f71"
+  },
+  "executable": {
+    "file": "laya.exe",
+    "sha256": "f3154d3275611dbcd095d2e2b102c21e0ad2f228efa19696c1f6995ebb8be244"
+  }
+}

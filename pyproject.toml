@@ -1,0 +1,16 @@
+[project]
+name = "laya-snake-arena"
+version = "0.1.0"
+description = "Configurable Snake decision arena for local Laya, TypeSafe JEV, and custom Python providers"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+readme = "README.md"
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/sathwikkuncham/laya-snake-arena"
+Issues = "https://github.com/sathwikkuncham/laya-snake-arena/issues"
+
+[tool.ruff]
+line-length = 120
+exclude = ["upstream"]

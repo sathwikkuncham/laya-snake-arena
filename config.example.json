@@ -1,0 +1,25 @@
+{
+  "executable": "bin/laya.exe",
+  "model": "models/laya_multilingual_f16.gguf",
+  "device": "cuda",
+  "port": 8765,
+  "width": 24,
+  "height": 16,
+  "seed": 7,
+  "fps": 8,
+  "jev_settings": null,
+  "jev_model": "jev-latest",
+  "initial_length": 6,
+  "guarded": true,
+  "prompt": "compact",
+  "warmup_moves": 3,
+  "max_recorded_moves": 10000,
+  "comparison_limit": 300,
+  "comparison_max_moves": 1000,
+  "solo_engine": "laya",
+  "plugins": [],
+  "engines": {
+    "laya": {"provider": "ggmlc", "label": "Laya", "caption": "Local GPU", "color": "#c9ef7d", "options": {}},
+    "jev": {"provider": "typesafe", "label": "JEV", "caption": "TypeSafe cloud", "color": "#91cfe3", "options": {}}
+  }
+}
