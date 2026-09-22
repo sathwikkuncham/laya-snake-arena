@@ -25,7 +25,7 @@ jobs:
       - name: Offline tests (no API credentials or GPU)
         run: python -m unittest discover -s tests -v
       - name: Python syntax
-        run: python -m compileall -q app.py backend.py compare.py jev_backend.py providers.py settings.py plugins tests
+        run: python -m compileall -q app.py backend.py board_policy.py compare.py jev_backend.py providers.py settings.py plugins tests
       - name: Browser JavaScript syntax
         run: |
           node --check static/app.js

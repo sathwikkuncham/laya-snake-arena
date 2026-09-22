@@ -117,6 +117,30 @@ the first-call connection setup. This is a gameplay demonstration of local versu
 remote execution, not a controlled hardware-only benchmark or a general model
 quality ranking. See [recording notes](docs/RECORDINGS.md).
 
+### Unassisted endurance
+
+In Compare, set **Run until → Collision or full board** and **Model input → Board
++ rules only**. This removes the move budget and disables all safety overrides.
+Each model receives an ASCII board, its legend, and the rules. There are no legal
+move lists, preferred directions, cycle safety descriptions, or route hints.
+The highest-probability direction executes unchanged, even when it is fatal.
+
+Each lane ends independently on a wall/body collision (including reversing into
+the neck), filling the board, or a separately reported provider error. A death or
+provider error in one lane does not stop the others. Pause remains available;
+without a collision, win, error, or user pause, a model can loop indefinitely.
+JEV continues making real API requests while its lane is running.
+
+Scores, moves, tokens, and active survival time accumulate without a move cap.
+Exports retain only the last `max_recorded_moves` frames per lane; median/P95
+latencies cover the latest 2,048 requests. This bounds memory, not play duration.
+The progress strip in endurance shows board occupancy instead of a move budget.
+
+The optional **Planner descriptions** input preserves the original assisted
+prompts with move overrides disabled. It is explicitly labeled and is not a test
+of understanding the raw board. Results in either endurance setting are not
+directly comparable to the earlier shielded demonstration videos.
+
 ## What the model sees
 
 The planner supplies descriptions such as "safe," "blocked," and "best route to

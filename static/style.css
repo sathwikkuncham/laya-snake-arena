@@ -5,3 +5,5 @@ body.capture main{max-width:1700px;padding:0 38px}body.capture header{height:54p
 body.capture .compare-card .board-wrap{max-width:420px}
 
 .compare-card .pill{color:var(--engine-color);background:#24312a}
+
+.endurance-explainer{display:flex;gap:14px;align-items:center;border:1px solid #5b6843;background:#1b241b;border-radius:8px;padding:12px 17px;margin:0 0 16px;font-size:12px}.endurance-explainer strong{color:var(--accent);white-space:nowrap}.endurance-explainer span{color:var(--muted)}.lane-outcome{margin:0 18px 13px;padding:10px 12px;background:#242c21;border:1px solid #4a5938;border-radius:6px;color:var(--engine-color);font:11px/1.6 var(--mono)}@media(max-width:780px){.endurance-explainer{align-items:start;flex-direction:column;gap:5px}}

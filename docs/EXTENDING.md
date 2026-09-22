@@ -160,6 +160,11 @@ tests the plumbing; its speed and behavior are not model benchmark results.
   delay. One finished lane does not throttle the remaining lanes.
 - Built-in local warmup is configurable; remote APIs are not called on startup.
 - A pending request may finish before a pause takes effect.
+- Endurance mode can supply a raw board and rules without planner descriptions.
+  The `choice` / `noul` response contract is unchanged. No output filtering or
+  correction is applied in this mode, and an unsafe choice ends that snake's game.
+- Keep request sizes within your model's context. Raw-board prompts grow with
+  configured board dimensions; do not silently truncate away board information.
 - Request timing wraps `predict`, including serialization, validation, and any
   network travel. Model initialization is outside the run timer.
 - Custom providers own their timeout/cancellation semantics. Avoid retries and

@@ -7,6 +7,7 @@
   const selectedNames = () => state?.mode === "both" ? engineIds : [state?.mode || engineIds[0]];
   const number = value => value == null ? "—" : Number(value).toFixed(1);
   const names = {};
+  const reasonText = {wall:"Hit a wall",body:"Hit its own body",reverse:"Reversed into its neck",board_filled:"Filled the board",move_limit:"Move budget reached",provider_error:"Provider error — not a Snake death"};
   const statusText = {ready: "READY", preparing: "PREPARING", running: "RUNNING AT FULL SPEED", paused: "PAUSED", finished: "COMPLETE", game_over: "GAME OVER", error: "REQUEST FAILED"};
   function ensureEngines(s) {
     const signature=JSON.stringify(s.engines);
@@ -24,11 +25,11 @@
     card.style.setProperty("--engine-color", engine.color);
     card.id = `card-${name}`;
     card.innerHTML = `<div class="compare-card-head"><div><span class="eyebrow"><span id="${name}-caption"></span></span><h2><span id="${name}-label"></span> <span class="pill" id="${name}-provider"></span></h2><p id="${name}-model"></p></div><span class="lane-status" id="${name}-status">READY</span></div>
-      <div class="race-progress"><i id="${name}-progress"></i></div>
+      <div class="lane-outcome" id="${name}-outcome" hidden></div><div class="race-progress"><i id="${name}-progress"></i></div>
       <div class="compare-top-metrics"><div><span>SCORE</span><strong id="${name}-score">00</strong></div><div><span>MOVES</span><strong id="${name}-moves">0 / 300</strong></div><div class="throughput"><span>AVERAGE SPEED</span><strong id="${name}-speed">— <small>moves/s</small></strong></div></div>
       <div class="board-wrap"><canvas id="${name}-board" width="960" height="640" role="img" aria-label="Snake board"></canvas></div>
       <div class="board-footer"><span><i class="legend-snake"></i> <span id="${name}-legend"></span> <i class="legend-food"></i> Food</span><span id="${name}-elapsed">0.0 s elapsed</span></div>
-      <div class="compare-latencies"><div><span>Last request</span><strong id="${name}-last">— <small>ms</small></strong></div><div><span>Median request</span><strong id="${name}-median">— <small>ms</small></strong></div><div><span>P95 request</span><strong id="${name}-p95">— <small>ms</small></strong></div><div><span>Shield overrides</span><strong id="${name}-shield">0</strong></div></div>
+      <div class="compare-latencies"><div><span>Last request</span><strong id="${name}-last">— <small>ms</small></strong></div><div><span>Recent median</span><strong id="${name}-median">— <small>ms</small></strong></div><div><span>Recent P95</span><strong id="${name}-p95">— <small>ms</small></strong></div><div><span>Shield overrides</span><strong id="${name}-shield">0</strong></div></div>
       <div class="compare-probabilities" id="${name}-probabilities">${["UP","DOWN","LEFT","RIGHT"].map(direction=>`<div data-direction="${direction}"><div><span>${direction}</span><strong>—</strong></div><div class="track"><i></i></div></div>`).join("")}</div>
       <div class="compare-decision"><span>ENGINE <b id="${name}-proposed">—</b> → EXECUTED <b id="${name}-executed">—</b></span><span id="${name}-tokens">0 input tokens</span></div><p class="lane-error" id="${name}-error" role="alert" hidden></p>`;
     el("compare-grid").appendChild(card);
@@ -46,16 +47,28 @@
       if (document.activeElement !== el(id)) el(id).value = value;
       el(id).disabled = pending || s.active;
     }
+    const endurance=s.stop_condition==="endurance";
     el("compare-limit").max=s.max_moves;
+    el("compare-stop").value=s.stop_condition;
+    el("compare-stop").disabled=pending||s.active;
+    el("compare-observation").value=s.observation;
+    el("compare-observation").disabled=pending||s.active;
+    el("compare-limit-field").hidden=endurance;
+    el("compare-observation-field").hidden=!endurance;
+    el("compare-shield-field").hidden=endurance;
+    el("endurance-explainer").hidden=!endurance;
+    el("endurance-copy").textContent=endurance&&s.observation==="board"
+      ? "Board and rules only. No planner hints, move cap, or overrides. Each snake plays until collision or a full board."
+      : "No move cap or overrides. Models still receive planner descriptions; this is not a raw-board test.";
     el("compare-shield").checked = s.guarded;
-    el("compare-shield").disabled = pending || s.active;
+    el("compare-shield").disabled = pending || s.active || endurance;
     el("compare-grid").classList.toggle("single-engine", s.mode !== "both");
     const boardSize=s.lanes[engineIds[0]].game;
     document.querySelector(".comparison-method span").textContent=`${boardSize.width} × ${boardSize.height} board · 3 questions per move · No pacing delay`;
     const selected = selectedNames().map(n => s.lanes[n]);
     const finished = selected.every(l => ["finished","game_over","error"].includes(l.state));
     el("compare-start").disabled = pending || s.active || finished || (selectedNames().includes(s.solo_engine) && !s.solo_ready);
-    el("compare-start").textContent = selected.some(l=>l.game.ticks>0) ? "▶ Resume comparison" : "▶ Start comparison";
+    el("compare-start").textContent = finished ? "Run ended" : s.active ? "Running…" : selected.some(l=>l.game.ticks>0) ? "▶ Resume run" : endurance ? "▶ Start endurance" : "▶ Start comparison";
     el("compare-pause").disabled = pending || !s.active || s.pausing;
     el("compare-pause").textContent = s.pausing ? "Finishing request…" : "Ⅱ Pause";
     el("compare-reset").disabled = pending || s.active;
@@ -72,14 +85,16 @@
       el(`${name}-status`).textContent = statusText[lane.state] || lane.state;
       el(`${name}-status`).dataset.state = lane.state;
       el(`${name}-score`).textContent = String(game.score).padStart(2,"0");
-      el(`${name}-moves`).textContent = `${game.ticks} / ${s.limit}`;
+      el(`${name}-moves`).textContent = endurance ? game.ticks.toLocaleString() : `${game.ticks} / ${s.limit}`;
+      el(`${name}-outcome`).hidden=!lane.termination_reason;
+      el(`${name}-outcome`).textContent=lane.termination_reason ? `${reasonText[lane.termination_reason] || lane.termination_reason} · Score ${game.score} · ${game.ticks} moves · ${number(lane.elapsed_s)} s active` : "";
       el(`${name}-speed`).innerHTML = `${game.ticks ? number(lane.average_rate) : "—"} <small>moves/s</small>`;
       el(`${name}-last`).innerHTML = `${number(d?.inference_ms)} <small>ms</small>`;
       el(`${name}-median`).innerHTML = `${number(lane.median_ms)} <small>ms</small>`;
       el(`${name}-p95`).innerHTML = `${number(lane.p95_ms)} <small>ms</small>`;
-      el(`${name}-elapsed`).textContent = `${number(lane.elapsed_s)} s elapsed`;
+      el(`${name}-elapsed`).textContent = `${number(lane.elapsed_s)} s ${endurance ? "survival time" : "elapsed"}`;
       el(`${name}-shield`).textContent = lane.interventions;
-      el(`${name}-progress`).style.width = `${100*game.ticks/s.limit}%`;
+      el(`${name}-progress`).style.width = `${endurance ? 100*game.length/(game.width*game.height) : 100*game.ticks/s.limit}%`;
       el(`${name}-proposed`).textContent = d?.proposed || "—";
       el(`${name}-executed`).textContent = d?.executed || "—";
       el(`${name}-tokens`).textContent = `${lane.input_tokens.toLocaleString()} input tokens`;
@@ -98,7 +113,7 @@
     const anyMoves=selected.some(l=>l.game.ticks>0);
     el("compare-summary").textContent = anyMoves
       ? `${finished?"Run ended":"In progress"}: ${rates}. ${finished?"Export the decisions to inspect the result.":"Wait for all engines to finish before comparing final rates."}`
-      : "Same seed, same move budget. Start a run to measure your selected engines.";
+      : endurance ? "Same starting board. No move limit or corrections. Models may loop indefinitely; you can pause at any time." : "Same seed, same move budget. Start a run to measure your selected engines.";
 
   }
 
@@ -153,8 +168,8 @@
   el("compare-start").addEventListener("click",()=>command("start"));
   el("compare-pause").addEventListener("click",()=>command("pause"));
   el("compare-reset").addEventListener("click",()=>command("reset"));
-  for(const id of ["compare-models","compare-seed","compare-limit","compare-shield"]) {
-    el(id).addEventListener("change",()=>command("configure",{mode:el("compare-models").value,seed:Number(el("compare-seed").value),limit:Number(el("compare-limit").value),guarded:el("compare-shield").checked}));
+  for(const id of ["compare-models","compare-seed","compare-limit","compare-shield","compare-stop","compare-observation"]) {
+    el(id).addEventListener("change",()=>command("configure",{mode:el("compare-models").value,seed:Number(el("compare-seed").value),limit:Number(el("compare-limit").value),guarded:el("compare-shield").checked,stop_condition:el("compare-stop").value,observation:el("compare-observation").value}));
   }
   el("compare-export").addEventListener("click",()=>{const a=document.createElement("a");a.href="/api/compare/recording";a.download="snake-engine-comparison.json";a.click();});
   window.addEventListener("snake-shutdown",()=>{

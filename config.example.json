@@ -16,6 +16,8 @@
   "max_recorded_moves": 10000,
   "comparison_limit": 300,
   "comparison_max_moves": 1000,
+  "comparison_stop": "moves",
+  "endurance_observation": "board",
   "solo_engine": "laya",
   "plugins": [],
   "engines": {

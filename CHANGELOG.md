@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Unassisted endurance runs until collision or a full board, without move/time caps.
+- Board-and-rules-only observations, without planner hints or action overrides.
+- Independent lane termination and explicit collision/win/provider-error outcomes.
+- Bounded frame retention and rolling latency samples for long-running games.
+
 ## 0.1.0 — 2026-09-21
 
 - Windows Snake adaptation using a resident ggmlc Laya process.

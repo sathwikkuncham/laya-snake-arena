@@ -2,6 +2,7 @@
 
 Modified 2026-09-21: inject a persistent ggmlc backend; remove MLX loading
 and Mac metadata. Original prompt construction and decision logic retained.
+Modified 2026-09-22: planner metadata permits null for the separate raw-board policy.
 """
 import math
 import time
@@ -13,7 +14,7 @@ class Decision:
     probabilities: dict
     proposed: str
     executed: str
-    safe_directions: list
+    safe_directions: list | None
     intervened: bool
     dead_end_risk: float
     food_reachable: float
@@ -21,8 +22,8 @@ class Decision:
     decision_ms: float
     input_tokens: int
     output_tokens: int
-    safe_count: int
-    planner_best: str
+    safe_count: int | None
+    planner_best: str | None
 
     def to_dict(self):
         return asdict(self)

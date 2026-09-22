@@ -15,6 +15,10 @@ The browser interface, local server, persistent process adapter, JEV adapter,
 comparison controller, Windows launcher, and configuration guide were added or
 adapted on 2026-09-21.
 
+On 2026-09-22, a separate raw-board policy and endurance mode were added.
+The original decision metadata annotations now permit null planner fields for
+that policy; the original planner-assisted decision method is retained.
+
 Laya models are by Convai Innovations and contributors:
   https://github.com/NandhaKishorM/laya
 

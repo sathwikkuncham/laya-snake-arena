@@ -39,7 +39,11 @@ class Comparison:
         self.seed = int(config.get("seed", 7))
         self.limit = config.get("comparison_limit", 300)
         self.max_moves = config.get("comparison_max_moves", 1000)
-        self.guarded = config.get("guarded", True)
+        self.stop_condition = config.get("comparison_stop", "moves")
+        self.observation = config.get("endurance_observation", "board")
+        self.guarded = False if self.stop_condition == "endurance" else config.get("guarded", True)
+        self.retention = config.get("max_recorded_moves", 10000)
+        self.latency_window = 2048
         self.lanes = {}
         self._reset()
 
@@ -51,7 +55,7 @@ class Comparison:
                 "game": SnakeGame(self.config.get("width", 24), self.config.get("height", 16), self.seed, self.config.get("initial_length", 6)),
                 "state": "ready", "error": None, "last": None,
                 "interventions": 0, "input_tokens": 0, "output_tokens": 0,
-                "latencies": [], "frames": [], "elapsed": 0.0,
+                "latencies": deque(maxlen=self.latency_window), "frames": deque(maxlen=self.retention), "elapsed": 0.0,
                 "segment_start": None, "recent": deque(maxlen=120),
                 "model": self.registry.public(name)["model"],
             }
@@ -74,15 +78,25 @@ class Comparison:
                 seed = data.get("seed", self.seed)
                 limit = data.get("limit", self.limit)
                 guarded = data.get("guarded", self.guarded)
+                stop_condition = data.get("stop_condition", self.stop_condition)
+                observation = data.get("observation", self.observation)
                 if mode not in (*self.registry.engines, "both"):
                     raise ValueError("Select a configured engine or all engines")
                 if type(seed) is not int or not 0 <= seed <= 999999:
                     raise ValueError("Seed must be an integer from 0 to 999999")
-                if type(limit) is not int or not 1 <= limit <= self.max_moves:
+                if stop_condition not in ("moves", "endurance"):
+                    raise ValueError("Choose a move budget or endurance")
+                if observation not in ("board", "planner"):
+                    raise ValueError("Choose board-only or planner-assisted input")
+                if stop_condition == "moves" and (type(limit) is not int or not 1 <= limit <= self.max_moves):
                     raise ValueError(f"Move limit must be from 1 to {self.max_moves}")
+                if stop_condition == "endurance":
+                    limit = self.limit  # Retain the last budget for a later return to budget mode.
+                    guarded = False
                 if type(guarded) is not bool:
                     raise ValueError("Shield must be true or false")
                 self.mode, self.seed, self.limit, self.guarded = mode, seed, limit, guarded
+                self.stop_condition, self.observation = stop_condition, observation
                 self._reset()
             elif action == "reset":
                 if self.active:
@@ -137,10 +151,10 @@ class Comparison:
             with self.lock:
                 lane["segment_start"] = time.perf_counter()
                 lane["state"] = "running"
-            policy = LayaPolicy(client, guarded=self.guarded, prompt=self.config.get("prompt", "compact"))
+            policy = self._policy(client)
             while not self.stop.is_set():
                 with self.lock:
-                    if lane["game"].ticks >= self.limit or not lane["game"].alive or lane["game"].won:
+                    if self._budget_reached(lane) or not lane["game"].alive or lane["game"].won:
                         break
                     game = copy.deepcopy(lane["game"])
                 before = game.snapshot()
@@ -167,9 +181,10 @@ class Comparison:
             # Backend errors are already sanitized; never include key, headers, or body.
             with self.lock:
                 lane["error"] = str(exc)
-            self.stop.set()
-            barrier.abort()
+            if lane["state"] == "preparing":
+                barrier.abort()
         finally:
+            ended_at = time.perf_counter()  # Resource teardown is not survival time.
             if name != self.solo_id:
                 try:
                     client.close()
@@ -177,12 +192,21 @@ class Comparison:
                     pass
             with self.lock:
                 if lane["segment_start"] is not None:
-                    lane["elapsed"] += time.perf_counter() - lane["segment_start"]
+                    lane["elapsed"] += ended_at - lane["segment_start"]
                     lane["segment_start"] = None
-                lane["state"] = "error" if lane["error"] else "game_over" if not lane["game"].alive else "finished" if lane["game"].ticks >= self.limit or lane["game"].won else "paused"
+                lane["state"] = "error" if lane["error"] else "game_over" if not lane["game"].alive else "finished" if self._budget_reached(lane) or lane["game"].won else "paused"
                 self.remaining -= 1
                 if self.remaining == 0:
                     self.active = self.pausing = False
+
+    def _budget_reached(self, lane):
+        return self.stop_condition == "moves" and lane["game"].ticks >= self.limit
+
+    def _policy(self, client):
+        if self.stop_condition == "endurance" and self.observation == "board":
+            from board_policy import BoardPolicy
+            return BoardPolicy(client)
+        return LayaPolicy(client, guarded=self.guarded, prompt=self.config.get("prompt", "compact"))
 
     def snapshot(self):
         with self.lock:
@@ -197,6 +221,7 @@ class Comparison:
                     "selected": name in self.selected(), "state": lane["state"],
                     "engine": self.registry.public(name),
                     "error": lane["error"], "game": lane["game"].snapshot(),
+                    "termination_reason": "provider_error" if lane["error"] else lane["game"].death_reason if not lane["game"].alive else "board_filled" if lane["game"].won else "move_limit" if self._budget_reached(lane) else None,
                     "last": copy.deepcopy(lane["last"]), "model": lane["model"],
                     "interventions": lane["interventions"],
                     "elapsed_s": round(elapsed, 3),
@@ -205,8 +230,12 @@ class Comparison:
                     "median_ms": round(statistics.median(latencies), 2) if latencies else None,
                     "p95_ms": percentile(latencies, .95),
                     "input_tokens": lane["input_tokens"], "output_tokens": lane["output_tokens"],
+                    "retained_frames": len(lane["frames"]),
+                    "latency_samples": len(latencies),
                 }
             return {"mode": self.mode, "seed": self.seed, "limit": self.limit,
+                    "stop_condition": self.stop_condition, "observation": self.observation,
+                    "retention_limit": self.retention, "latency_window": self.latency_window,
                     "guarded": self.guarded, "active": self.active, "pausing": self.pausing,
                     "run_id": self.run_id, "initial_state_sha256": self.initial_hash,
                     "lanes": lanes, "hardware": self.solo.hardware,
@@ -216,8 +245,8 @@ class Comparison:
 
     def export(self):
         with self.lock:
-            return {"format": "laya-snake-arena-compare-v1", "summary": self.snapshot(), "prompt": self.config.get("prompt", "compact"),
-                    "method": "Same board, initial body, seed, prompt policy, shield, and move limit. Full speed, one sequential request per move per engine. Paths may diverge. API wall latency includes network; the solo model is resident. Pauses excluded from elapsed time; connection setup included in a provider's first decision. Built-in providers use no automatic retries or result cache.",
+            return {"format": "laya-snake-arena-compare-v2", "summary": self.snapshot(), "prompt": "raw-board-v1" if self.stop_condition == "endurance" and self.observation == "board" else self.config.get("prompt", "compact"),
+                    "method": "Same board, initial body, seed, input policy, and termination setting. Endurance has no move/time limit and never overrides the model's move. Each lane ends independently on collision, a full board, or a provider error; user pause remains available. Score and move counters are cumulative; only the last retention_limit frames and latency_window timings remain in memory. Paths may diverge. API wall latency includes network; the solo model is resident. Pauses excluded from elapsed time; connection setup included in a provider's first decision. Built-in providers use no automatic retries or result cache.",
                     "frames": {n: list(self.lanes[n]["frames"]) for n in self.selected()}}
 
     def close(self):

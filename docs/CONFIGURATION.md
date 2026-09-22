@@ -56,6 +56,8 @@ working directory. It does not download binaries or weights automatically.
 | `max_recorded_moves` | Solo recording retention (1–10,000); larger boards use more memory |
 | `comparison_limit` | Default moves per engine |
 | `comparison_max_moves` | Maximum selectable comparison moves (1–10,000) |
+| `comparison_stop` | `moves` for a fixed budget, or `endurance` for collision/full-board termination without a move/time cap |
+| `endurance_observation` | `board` for board and rules only; `planner` retains assisted descriptions. Endurance always disables move overrides |
 | `solo_engine` | ID of the engine used by the solo view |
 | `engines` | One to four engine definitions; see the extension guide |
 | `plugins` | Trusted local Python modules exposing `register(registry)` |
@@ -112,8 +114,9 @@ not the app's `.env` file.
   display intentionally does not echo keys or request headers.
 - **JEV timeout/rate limit:** the run stops without silently retrying. Start a
   new comparison after resolving the connection or account limit.
-- **A lane finishes first:** expected. Each advances independently to the same
-  move budget. Compare final averages when both lanes have finished.
+- **A lane finishes first:** expected. Each advances independently to its move
+  budget or, in endurance mode, a collision or full board. Errors are reported
+  separately from Snake deaths and do not stop another running lane.
 - **App stays running after closing a tab:** use Quit app to unload the model.
 
 The app binds only to `127.0.0.1`. Do not expose this development server directly

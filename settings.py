@@ -11,11 +11,13 @@ from providers import DEFAULT_ENGINES
 DEFAULTS = {"width": 24, "height": 16, "initial_length": 6, "seed": 7, "fps": 8,
             "guarded": True, "prompt": "compact", "warmup_moves": 3,
             "max_recorded_moves": 10000, "comparison_limit": 300,
-            "comparison_max_moves": 1000, "solo_engine": "laya", "plugins": [],
+            "comparison_max_moves": 1000, "comparison_stop": "moves", "endurance_observation": "board", "solo_engine": "laya", "plugins": [],
             "engines": DEFAULT_ENGINES, "jev_settings": None, "jev_model": "jev-latest"}
 
 
 def validate_config(config):
+    if config["comparison_stop"] not in ("moves", "endurance") or config["endurance_observation"] not in ("board", "planner"):
+        raise ValueError("Invalid comparison termination or endurance input setting")
     for key, low, high in (("width", 4, 64), ("height", 4, 64), ("seed", 0, 999999),
                            ("initial_length", 2, 4095), ("warmup_moves", 0, 20),
                            ("max_recorded_moves", 1, 10000), ("comparison_limit", 1, 10000),
