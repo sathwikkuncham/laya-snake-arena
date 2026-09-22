@@ -57,9 +57,10 @@
     el("compare-observation-field").hidden=!endurance;
     el("compare-shield-field").hidden=endurance;
     el("endurance-explainer").hidden=!endurance;
+    el("endurance-title").textContent=s.observation==="board" ? "Board-only endurance" : "Planner-assisted endurance";
     el("endurance-copy").textContent=endurance&&s.observation==="board"
-      ? "Board and rules only. No planner hints, move cap, or overrides. Each snake plays until collision or a full board."
-      : "No move cap or overrides. Models still receive planner descriptions; this is not a raw-board test.";
+      ? "Planner hints: OFF. Move overrides: OFF. The model sees the board and rules only. Runs until collision or a full board."
+      : "Planner hints: ON — code labels safe and preferred moves. Move overrides: OFF — the model chooses the move. Runs until collision or a full board.";
     el("compare-shield").checked = s.guarded;
     el("compare-shield").disabled = pending || s.active || endurance;
     el("compare-grid").classList.toggle("single-engine", s.mode !== "both");
